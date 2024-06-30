@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import keras
 import tensorflow as tf
 from datetime import datetime, timedelta
-
+st.write("The Data is Loading for the Score")
 # Load data
 ipl = pd.read_csv('ipl_data.csv')
 
@@ -48,7 +48,7 @@ model = keras.Sequential([
 # Compile the model
 huber_loss = tf.keras.losses.Huber(delta=1.0)
 model.compile(optimizer='adam', loss=huber_loss)
-model.fit(X_train_scaled, y_train, epochs=50, batch_size=64, validation_data=(X_test_scaled, y_test))
+model.fit(X_train_scaled, y_train, epochs=5, batch_size=48, validation_data=(X_test_scaled, y_test))
 
 # Streamlit UI
 st.title("IPL Score Prediction")
