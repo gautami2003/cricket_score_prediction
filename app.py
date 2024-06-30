@@ -7,8 +7,9 @@ from sklearn.model_selection import train_test_split
 import keras
 import tensorflow as tf
 from datetime import datetime, timedelta
-st.write("The Data is Loading for the Score")
+
 # Load data
+st.write("The Data is Loading for the Score")
 ipl = pd.read_csv('ipl_data.csv')
 
 # Dropping certain features
@@ -48,17 +49,19 @@ model = keras.Sequential([
 # Compile the model
 huber_loss = tf.keras.losses.Huber(delta=1.0)
 model.compile(optimizer='adam', loss=huber_loss)
+
+# Train the model
 model.fit(X_train_scaled, y_train, epochs=5, batch_size=48, validation_data=(X_test_scaled, y_test))
 
 # Streamlit UI
 st.title("IPL Score Prediction")
 
 st.sidebar.header("User Input Parameters")
-venue = st.sidebar.selectbox('Select Venue', df['venue'].unique().tolist())
-batting_team = st.sidebar.selectbox('Select Batting Team', df['bat_team'].unique().tolist())
-bowling_team = st.sidebar.selectbox('Select Bowling Team', df['bowl_team'].unique().tolist())
-striker = st.sidebar.selectbox('Select Striker', df['batsman'].unique().tolist())
-bowler = st.sidebar.selectbox('Select Bowler', df['bowler'].unique().tolist())
+venue = st.sidebar.selectbox('Select Venue', venue_encoder.classes_)
+batting_team = st.sidebar.selectbox('Select Batting Team', batting_team_encoder.classes_)
+bowling_team = st.sidebar.selectbox('Select Bowling Team', bowling_team_encoder.classes_)
+striker = st.sidebar.selectbox('Select Striker', striker_encoder.classes_)
+bowler = st.sidebar.selectbox('Select Bowler', bowler_encoder.classes_)
 
 def predict_score():
     # Encode the selected inputs
@@ -79,32 +82,26 @@ def predict_score():
     return predicted_score
 
 def predict_future_scores():
-    # Generate synthetic data for the next 3 years
+    # Generate synthetic data for the next 5 years
     num_future_matches_per_year = 1  # Number of future matches to predict per year
     num_future_years = 5
     num_future_matches = num_future_matches_per_year * num_future_years
 
     # Randomly sample from existing categorical values
     future_data = {
-        'venue': random.choices(df['venue'].unique(), k=num_future_matches),
-        'bat_team': random.choices(df['bat_team'].unique(), k=num_future_matches),
-        'bowl_team': random.choices(df['bowl_team'].unique(), k=num_future_matches),
-        'batsman': random.choices(df['batsman'].unique(), k=num_future_matches),
-        'bowler': random.choices(df['bowler'].unique(), k=num_future_matches),
+        'venue': random.choices(venue_encoder.transform(venue_encoder.classes_), k=num_future_matches),
+        'bat_team': random.choices(batting_team_encoder.transform(batting_team_encoder.classes_), k=num_future_matches),
+        'bowl_team': random.choices(bowling_team_encoder.transform(bowling_team_encoder.classes_), k=num_future_matches),
+        'batsman': random.choices(striker_encoder.transform(striker_encoder.classes_), k=num_future_matches),
+        'bowler': random.choices(bowler_encoder.transform(bowler_encoder.classes_), k=num_future_matches),
         'date': [datetime.now() + timedelta(days=i) for i in range(num_future_matches)]  # Future dates
     }
 
     future_df = pd.DataFrame(future_data)
 
-    # Encode the categorical data
-    future_df['venue'] = venue_encoder.transform(future_df['venue'])
-    future_df['bat_team'] = batting_team_encoder.transform(future_df['bat_team'])
-    future_df['bowl_team'] = bowling_team_encoder.transform(future_df['bowl_team'])
-    future_df['batsman'] = striker_encoder.transform(future_df['batsman'])
-    future_df['bowler'] = bowler_encoder.transform(future_df['bowler'])
-
-    # Scale the synthetic data
-    future_df_scaled = scaler.transform(future_df.drop('date', axis=1))
+    # Create DataFrame without 'date' for scaling
+    future_df_for_scaling = future_df.drop('date', axis=1)
+    future_df_scaled = scaler.transform(future_df_for_scaling)
 
     # Make predictions
     future_predictions = model.predict(future_df_scaled)
