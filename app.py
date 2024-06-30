@@ -9,7 +9,7 @@ import tensorflow as tf
 from datetime import datetime, timedelta
 
 # Load data
-ipl = pd.read_csv('/path/to/your/ipl_data.csv')
+ipl = pd.read_csv('ipl_data.csv')
 
 # Dropping certain features
 df = ipl.drop(['date', 'runs', 'wickets', 'overs', 'runs_last_5', 'wickets_last_5', 'mid', 'striker', 'non-striker'], axis=1)
