@@ -1,15 +1,15 @@
-import streamlit as st
 import pandas as pd
 import numpy as np
+import random
+import streamlit as st
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
 import keras
 import tensorflow as tf
-import random
 from datetime import datetime, timedelta
 
 # Load data
-ipl = pd.read_csv('ipl_data.csv')
+ipl = pd.read_csv('/path/to/your/ipl_data.csv')
 
 # Dropping certain features
 df = ipl.drop(['date', 'runs', 'wickets', 'overs', 'runs_last_5', 'wickets_last_5', 'mid', 'striker', 'non-striker'], axis=1)
@@ -80,8 +80,8 @@ def predict_score():
 
 def predict_future_scores():
     # Generate synthetic data for the next 3 years
-    num_future_matches_per_year = 100  # Number of future matches to predict per year
-    num_future_years = 3
+    num_future_matches_per_year = 1  # Number of future matches to predict per year
+    num_future_years = 5
     num_future_matches = num_future_matches_per_year * num_future_years
 
     # Randomly sample from existing categorical values
@@ -90,4 +90,40 @@ def predict_future_scores():
         'bat_team': random.choices(df['bat_team'].unique(), k=num_future_matches),
         'bowl_team': random.choices(df['bowl_team'].unique(), k=num_future_matches),
         'batsman': random.choices(df['batsman'].unique(), k=num_future_matches),
-        'bowler': random.c
+        'bowler': random.choices(df['bowler'].unique(), k=num_future_matches),
+        'date': [datetime.now() + timedelta(days=i) for i in range(num_future_matches)]  # Future dates
+    }
+
+    future_df = pd.DataFrame(future_data)
+
+    # Encode the categorical data
+    future_df['venue'] = venue_encoder.transform(future_df['venue'])
+    future_df['bat_team'] = batting_team_encoder.transform(future_df['bat_team'])
+    future_df['bowl_team'] = bowling_team_encoder.transform(future_df['bowl_team'])
+    future_df['batsman'] = striker_encoder.transform(future_df['batsman'])
+    future_df['bowler'] = bowler_encoder.transform(future_df['bowler'])
+
+    # Scale the synthetic data
+    future_df_scaled = scaler.transform(future_df.drop('date', axis=1))
+
+    # Make predictions
+    future_predictions = model.predict(future_df_scaled)
+
+    # Convert predictions to a readable format
+    future_predictions = [int(pred[0]) for pred in future_predictions]
+
+    # Create DataFrame to display future predictions
+    future_predictions_df = pd.DataFrame({
+        'Date': future_df['date'].apply(lambda x: x.date()),
+        'Predicted Score': future_predictions
+    })
+
+    return future_predictions_df
+
+if st.button("Predict Score"):
+    predicted_score = predict_score()
+    st.write(f"Predicted Score: {predicted_score}")
+
+if st.button("Predict Future Scores"):
+    future_predictions_df = predict_future_scores()
+    st.write(future_predictions_df)
