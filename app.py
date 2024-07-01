@@ -9,7 +9,8 @@ import tensorflow as tf
 from datetime import datetime, timedelta
 
 # Load data
-st.write("The Data is Loading for the Score")
+st.write("DATA IS LOADING...")
+
 ipl = pd.read_csv('ipl_data.csv')
 
 # Dropping certain features
@@ -51,11 +52,11 @@ huber_loss = tf.keras.losses.Huber(delta=1.0)
 model.compile(optimizer='adam', loss=huber_loss)
 
 # Train the model
-model.fit(X_train_scaled, y_train, epochs=5, batch_size=48, validation_data=(X_test_scaled, y_test))
+model.fit(X_train_scaled, y_train, epochs=5, batch_size=15, validation_data=(X_test_scaled, y_test))
 
 # Streamlit UI
 st.title("IPL Score Prediction")
-
+                
 st.sidebar.header("User Input Parameters")
 venue = st.sidebar.selectbox('Select Venue', venue_encoder.classes_)
 batting_team = st.sidebar.selectbox('Select Batting Team', batting_team_encoder.classes_)
@@ -115,12 +116,24 @@ def predict_future_scores():
         'Predicted Score': future_predictions
     })
 
-    return future_predictions_df
+    # Plotting future predictions
+    fig, ax = plt.subplots()
+    ax.plot(future_predictions_df['Date'], future_predictions_df['Predicted Score'], marker='o', linestyle='-')
+    ax.set_title('Predicted Scores Over Time')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Predicted Score')
+    ax.grid(True)
+    
+    return future_predictions_df, fig
 
 if st.button("Predict Score"):
     predicted_score = predict_score()
     st.write(f"Predicted Score: {predicted_score}")
 
 if st.button("Predict Future Scores"):
-    future_predictions_df = predict_future_scores()
+    future_predictions_df, future_plot = predict_future_scores()
     st.write(future_predictions_df)
+
+    # Display future score predictions plot
+    st.subheader("Future Score Predictions")
+    st.pyplot(future_plot)
